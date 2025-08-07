@@ -23,3 +23,8 @@ client_secret.json
 
 # ---- Logs --------------------------------------------------------------
 mcp_server_debug.log
+
+# ---- Development tools -------------------------------------------------
+.ruff_cache/
+.serena/
+.claude/
