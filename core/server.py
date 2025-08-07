@@ -194,6 +194,25 @@ async def oauth2_callback(request: Request) -> HTMLResponse:
 # --- Tools ---
 @server.tool()
 async def start_google_auth(service_name: str, user_google_email: str = USER_GOOGLE_EMAIL) -> str:
+    """
+    Initialize Google Workspace authentication for a specific service.
+    
+    KNOWN ISSUES:
+    - May throw "unexpected keyword argument 'scopes'" error in some environments
+    - This function may fail in certain setups - if it does, proceed directly 
+      to using other functions with your email address
+    - Authentication may be handled automatically in some cases
+    
+    Args:
+        service_name (str): The Google service to authenticate for (e.g., "drive", "sheets", "gmail")
+        user_google_email (str): The user's Google email address. Defaults to configured email.
+    
+    Returns:
+        str: Authentication URL or error message
+    
+    Note: If this function fails, you can often proceed directly to using other
+          functions as authentication may be handled automatically.
+    """
     if not user_google_email:
         raise ValueError("user_google_email must be provided.")
 

@@ -361,7 +361,14 @@ async def modify_sheet_values(
     Args:
         user_google_email (str): The user's Google email address. Required.
         spreadsheet_id (str): The ID of the spreadsheet. Required.
-        range_name (str): The range to modify (e.g., "Sheet1!A1:D10", "A1:D10"). Required.
+        range_name (str): The A1 notation range to modify. Required.
+                         Format: "[SheetName!]A1:D10"
+                         Examples:
+                         - "Sheet1!A1:D10" (specific sheet - RECOMMENDED)
+                         - "A1:D10" (uses first/active sheet)
+                         - "'My Sheet'!A1:D10" (sheet name with spaces)
+                         Note: This parameter is called 'range_name' for backward compatibility,
+                               but it functions the same as 'range' in other functions.
         values (Any): Values to write/update. Can be a single value, 1D array, or 2D array. Required unless clear_values=True.
         value_input_option (str): How to interpret input values ("RAW" or "USER_ENTERED"). Defaults to "USER_ENTERED".
         clear_values (bool): If True, clears the range instead of writing values. Defaults to False.
@@ -444,9 +451,15 @@ async def update_sheet_values(
     """
     Simplified function for updating values in a Google Sheet range.
     
-    IMPORTANT: This function will update the exact range specified. The API may extend
-    the range if your data exceeds the specified bounds. To ensure exact range updates,
-    make sure your data dimensions match the range dimensions.
+    WHEN TO USE THIS vs batch_update_values:
+    - Use THIS for: Single range updates, simple data writes, when range auto-extension is OK
+    - Use batch_update_values for: Multiple ranges, precise range control, complex updates
+    
+    IMPORTANT BEHAVIOR:
+    - The API may extend the range if your data exceeds the specified bounds
+    - If you specify "A1:C3" but provide 5x5 data, it WILL write all 5x5
+    - For exact range control, use batch_update_values instead
+    - May report "1 cell updated" when range appears larger (known API behavior)
 
     Args:
         user_google_email (str): The user's Google email address. Required.
@@ -571,6 +584,15 @@ async def batch_update_values(
 ) -> str:
     """
     Update multiple ranges in a spreadsheet with a single API call for better performance.
+    
+    WHEN TO USE THIS vs update_sheet_values:
+    - Use THIS for: Multiple ranges, precise range control, batch operations
+    - Use update_sheet_values for: Single simple updates where range extension is acceptable
+    
+    KEY ADVANTAGES:
+    - Updates multiple ranges in one API call (better performance)
+    - Provides precise range control (no auto-extension)
+    - Atomic operation - all updates succeed or all fail together
 
     Args:
         user_google_email (str): The user's Google email address. Required.
@@ -864,10 +886,18 @@ async def format_cells(
     Args:
         user_google_email (str): The user's Google email address. Required.
         spreadsheet_id (str): The ID of the spreadsheet. Required.
-        range (str): The range to format (e.g., "Sheet1!A1:D10"). Required.
+        range (str): The A1 notation range to format. Required.
+                    Format: "[SheetName!]A1:D10"
+                    Examples:
+                    - "Sheet1!A1:D10" (specific sheet - RECOMMENDED)
+                    - "A1:D10" (uses first/active sheet)
+                    - "'My Sheet'!A1:D10" (sheet name with spaces - use quotes)
+                    Best Practice: Always include sheet name to avoid ambiguity.
         background_color (Optional[str]): Hex color for background (e.g., "#FF0000").
         font_color (Optional[str]): Hex color for text (e.g., "#000000").
-        font_size (Optional[int]): Font size in points (e.g., 10, 12, 14).
+        font_size (Optional[int]): Font size in points. Must be an integer between 6 and 400.
+                                   Common values: 8, 10, 11, 12, 14, 16, 18, 24, 36.
+                                   Defaults to current font size if not specified.
         font_family (Optional[str]): Font family name (e.g., "Arial", "Times New Roman", "Roboto").
         bold (Optional[Union[bool, int, str]]): Make text bold. Accepts: True/False, 1/0, "true"/"false".
         italic (Optional[Union[bool, int, str]]): Make text italic. Accepts: True/False, 1/0, "true"/"false".
@@ -2179,6 +2209,17 @@ async def apply_table_style(
     
     This function applies comprehensive formatting including headers, alternating rows,
     borders, and color schemes to make data tables more readable and visually appealing.
+    
+    PREREQUISITES:
+    - Range MUST contain actual data (not empty cells)
+    - Spreadsheet must be accessible with write permissions
+    - Range must use valid A1 notation (e.g., "Sheet1!A1:F20")
+    - The sheet specified in the range must exist
+    
+    COMMON ISSUES:
+    - "'str' object is not callable" - Usually means the range is empty or invalid
+    - "Sheet not found" - Check sheet name spelling and existence
+    - No visible changes - Ensure the range contains data before applying style
     
     Args:
         user_google_email (str): The user's Google email address. Required.
