@@ -24,6 +24,10 @@ from .sheets_tools import (
     update_sheet_values,
     batch_update_values,
     append_sheet_values,
+    # New helper functions
+    get_data_boundaries,
+    apply_table_style,
+    reset_to_default_formatting,
 )
 
 __all__ = [
@@ -46,4 +50,8 @@ __all__ = [
     "update_sheet_values",
     "batch_update_values",
     "append_sheet_values",
+    # New helper functions
+    "get_data_boundaries",
+    "apply_table_style",
+    "reset_to_default_formatting",
 ]
