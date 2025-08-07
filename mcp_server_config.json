@@ -1,0 +1,24 @@
+// 1password > shared_v2 > Google Workspace 참조 
+// git clone https://github.com/miroblog/google-workspace-mcp.git
+// add below to ~/.claude_desktop_config.json
+{
+    "mcpServers": {
+        "Google Workspace": {
+            "command": "uv",
+            "args": [
+                "run",
+                "--directory",
+                "경로설정",
+                "main.py",
+                "--tools",
+                "sheets"
+            ],
+            "env": {
+                "GOOGLE_OAUTH_CLIENT_ID": "아래 참조",
+                "GOOGLE_OAUTH_CLIENT_SECRET": "아래 참조",
+                "USER_GOOGLE_EMAIL": "자기계정@hyperithm.com",
+                "OAUTHLIB_INSECURE_TRANSPORT": "1"
+            }
+        }
+    }
+}
