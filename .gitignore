@@ -28,3 +28,41 @@ mcp_server_debug.log
 .ruff_cache/
 .serena/
 .claude/
+.dxt/
+.dxtignore
+
+# ---- OAuth and credentials ---------------------------------------------
+.env.oauth21
+credentials.json
+token.json
+*.pickle
+client_secret*.json
+
+# ---- Python virtual environments ---------------------------------------
+ENV/
+env/
+.Python
+
+# ---- IDE and editor files ----------------------------------------------
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+
+# ---- Testing and coverage ----------------------------------------------
+.coverage
+.pytest_cache/
+htmlcov/
+.tox/
+.nox/
+
+# ---- Documentation builds -----------------------------------------------
+docs/_build/
+docs/.doctrees/
+
+# ---- Local development files -------------------------------------------
+*.local
+*.local.json
+local_settings.py
