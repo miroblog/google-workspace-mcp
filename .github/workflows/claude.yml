@@ -45,7 +45,7 @@ jobs:
 
       - name: Create MCP Config (AWS CCAPI MCP)
         run: |
-          cat > /tmp/mcp-config.json << 'EOF'
+          cat > /tmp/mcp-config.json << EOF
           {
             "mcpServers": {
               "awslabs.ccapi-mcp-server": {
@@ -53,7 +53,10 @@ jobs:
                 "command": "uvx",
                 "args": ["awslabs.ccapi-mcp-server@latest"],
                 "env": {
-                  "AWS_PROFILE": "default",
+                  "AWS_ACCESS_KEY_ID": "$AWS_ACCESS_KEY_ID",
+                  "AWS_SECRET_ACCESS_KEY": "$AWS_SECRET_ACCESS_KEY",
+                  "AWS_SESSION_TOKEN": "$AWS_SESSION_TOKEN",
+                  "AWS_REGION": "ap-northeast-1",
                   "DEFAULT_TAGS": "enabled",
                   "SECURITY_SCANNING": "enabled",
                   "FASTMCP_LOG_LEVEL": "ERROR"
