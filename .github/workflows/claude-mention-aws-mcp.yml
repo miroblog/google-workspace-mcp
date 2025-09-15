@@ -1,0 +1,92 @@
+name: Claude (@claude mention) with AWS MCP
+
+on:
+  issue_comment:
+    types: [created, edited]
+  pull_request_review_comment:
+    types: [created, edited]
+  # 수동 테스트용
+  workflow_dispatch: {}
+
+permissions:
+  contents: write          # 코드 변경/브랜치 작업 가능성 대비
+  pull-requests: write     # PR 코멘트 작성/수정
+  issues: write            # 이슈 코멘트 작성/수정
+  id-token: write          # OIDC (AWS Role Assume)
+
+jobs:
+  claude:
+    # 멘션 없는 댓글에는 돌지 않게 가드 (workflow_dispatch는 항상 허용)
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.comment.body != null && contains(github.event.comment.body, '@claude'))
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      # 1) AWS OIDC 인증 (임시 자격증명)
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-session-name: ClaudeCodeMention
+          aws-region: ap-northeast-1  # 필요 지역으로 수정(서울은 ap-northeast-2)
+
+      # (옵션) OIDC 정상 확인
+      - name: Who am I
+        run: aws sts get-caller-identity
+
+      # 2) uv 설치 (uvx 사용)
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          uv --version
+
+      # 3) MCP 설정 JSON을 온더플라이 생성
+      - name: Create MCP Config (AWS CCAPI MCP)
+        run: |
+          cat > /tmp/mcp-config.json << 'EOF'
+          {
+            "mcpServers": {
+              "awslabs.ccapi-mcp-server": {
+                "type": "stdio",
+                "command": "uvx",
+                "args": ["awslabs.ccapi-mcp-server@latest"],
+                "env": {
+                  "AWS_PROFILE": "default",
+                  "AWS_REGION": "ap-northeast-1",
+                  "DEFAULT_TAGS": "enabled",
+                  "SECURITY_SCANNING": "enabled",
+                  "FASTMCP_LOG_LEVEL": "ERROR"
+                },
+                "disabled": false,
+                "autoApprove": []
+              }
+            }
+          }
+          EOF
+
+      # 4) Claude Code 실행 (@claude 멘션 Tag 모드)
+      - name: Run Claude Code (mention)
+        uses: anthropics/claude-code-action@v1
+        with:
+          # ✅ OAuth 토큰 사용 (API Key는 비워두세요)
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+
+          # 멘션 모드 기본 트리거는 '@claude' (바꾸고 싶으면 trigger_phrase로 지정 가능)
+          # trigger_phrase: "@claude"
+
+          # 프롬프트는 멘션 코멘트가 지시문 역할을 하므로 비워도 됩니다.
+          # (원한다면 기본 프롬프트/가드레일을 append_system_prompt 등으로 추가 가능)
+          prompt: ""
+
+          # (선택) 붙박이 코멘트 하나로 업데이트하고 싶다면 아래 주석 해제
+          # use_sticky_comment: "true"
+
+          # Claude CLI에 MCP 설정 전달
+          claude_args: |
+            --mcp-config /tmp/mcp-config.json
